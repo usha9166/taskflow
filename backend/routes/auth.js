@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
 const { body, validationResult } = require('express-validator');
 const db = require('../db/database');
 const { JWT_SECRET, authenticate } = require('../middleware/auth');
@@ -22,7 +22,7 @@ router.post('/signup', [
   if (existing) return res.status(409).json({ error: 'Email already registered' });
 
   const hashed = await bcrypt.hash(password, 10);
-  const user = { id: uuidv4(), name, email, password: hashed, created_at: new Date().toISOString() };
+  const user = { id: crypto.randomUUID(), name, email, password: hashed, created_at: new Date().toISOString() };
   db.get('users').push(user).write();
 
   const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '7d' });

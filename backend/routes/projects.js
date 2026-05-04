@@ -1,5 +1,5 @@
 const express = require('express');
-const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
 const { body, validationResult } = require('express-validator');
 const db = require('../db/database');
 const { authenticate, requireProjectRole } = require('../middleware/auth');
@@ -36,13 +36,13 @@ router.post('/', authenticate, [
 
   const { name, description } = req.body;
   const project = {
-    id: uuidv4(), name, description: description || '',
+    id: crypto.randomUUID(), name, description: description || '',
     owner_id: req.user.id, created_at: new Date().toISOString()
   };
   db.get('projects').push(project).write();
 
   // Creator is admin
-  const membership = { id: uuidv4(), project_id: project.id, user_id: req.user.id, role: 'admin', joined_at: new Date().toISOString() };
+  const membership = { id: crypto.randomUUID(), project_id: project.id, user_id: req.user.id, role: 'admin', joined_at: new Date().toISOString() };
   db.get('project_members').push(membership).write();
 
   res.status(201).json({ project: { ...project, my_role: 'admin', members: [] } });
@@ -97,7 +97,7 @@ router.post('/:projectId/members', authenticate, requireProjectRole(['admin']), 
   const existing = db.get('project_members').find({ project_id: req.params.projectId, user_id: user.id }).value();
   if (existing) return res.status(409).json({ error: 'User already in project' });
 
-  const membership = { id: uuidv4(), project_id: req.params.projectId, user_id: user.id, role, joined_at: new Date().toISOString() };
+  const membership = { id: crypto.randomUUID(), project_id: req.params.projectId, user_id: user.id, role, joined_at: new Date().toISOString() };
   db.get('project_members').push(membership).write();
   res.status(201).json({ member: { ...membership, name: user.name, email: user.email } });
 });

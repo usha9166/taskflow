@@ -1,5 +1,5 @@
 const express = require('express');
-const { v4: uuidv4 } = require('uuid');
+const crypto = require('crypto');
 const { body, validationResult } = require('express-validator');
 const db = require('../db/database');
 const { authenticate, requireProjectRole } = require('../middleware/auth');
@@ -48,7 +48,7 @@ router.post('/', authenticate, requireProjectRole(['admin','member']), [
   }
 
   const task = {
-    id: uuidv4(),
+    id: crypto.randomUUID(),
     project_id: req.params.projectId,
     title,
     description: description || '',
@@ -140,7 +140,7 @@ router.post('/:taskId/comments', authenticate, requireProjectRole(['admin','memb
 ], (req, res) => {
   const task = db.get('tasks').find({ id: req.params.taskId, project_id: req.params.projectId }).value();
   if (!task) return res.status(404).json({ error: 'Task not found' });
-  const comment = { id: uuidv4(), task_id: req.params.taskId, user_id: req.user.id, content: req.body.content, created_at: new Date().toISOString() };
+  const comment = { id: crypto.randomUUID(), task_id: req.params.taskId, user_id: req.user.id, content: req.body.content, created_at: new Date().toISOString() };
   db.get('comments').push(comment).write();
   res.status(201).json({ comment: { ...comment, user: { id: req.user.id, name: req.user.name } } });
 });
